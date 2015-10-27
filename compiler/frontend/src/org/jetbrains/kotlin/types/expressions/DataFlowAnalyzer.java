@@ -275,24 +275,26 @@ public class DataFlowAnalyzer {
     @Nullable
     public KotlinType checkImplicitCast(@Nullable KotlinType expressionType, @NotNull KtExpression expression, @NotNull ResolutionContext context, boolean isStatement) {
         boolean isIfExpression = expression instanceof KtIfExpression;
-        if (expressionType != null && (context.expectedType == NO_EXPECTED_TYPE || isIfExpression)
-                && context.contextDependency == INDEPENDENT && !isStatement
-                && (KotlinBuiltIns.isUnit(expressionType) || KotlinBuiltIns.isAnyOrNullableAny(expressionType))
-                && !DynamicTypesKt.isDynamic(expressionType)) {
-            if (isIfExpression && KotlinBuiltIns.isUnit(expressionType)) {
-                KtIfExpression ifExpression = (KtIfExpression) expression;
-                if (ifExpression.getThen() == null || ifExpression.getElse() == null) {
-                    context.trace.report(INVALID_IF_AS_EXPRESSION.on((KtIfExpression) expression));
-                    return expressionType;
-                }
-            }
-            else if (isIfExpression && context.expectedType != NO_EXPECTED_TYPE) {
+        boolean baseChecks = expressionType != null && !isStatement
+                    && (KotlinBuiltIns.isUnit(expressionType) || KotlinBuiltIns.isAnyOrNullableAny(expressionType))
+                    && !DynamicTypesKt.isDynamic(expressionType);
+
+        if (!baseChecks) return expressionType;
+
+        if (isIfExpression && KotlinBuiltIns.isUnit(expressionType)) {
+            KtIfExpression ifExpression = (KtIfExpression) expression;
+            if (ifExpression.getElseKeyword() == null) {
+                context.trace.report(INVALID_IF_AS_EXPRESSION.on((KtIfExpression) expression));
                 return expressionType;
             }
-            else {
-                context.trace.report(IMPLICIT_CAST_TO_UNIT_OR_ANY.on(expression, expressionType));
-            }
         }
+        else if (isIfExpression && context.expectedType != NO_EXPECTED_TYPE) {
+            return expressionType;
+        }
+        else if (context.expectedType == NO_EXPECTED_TYPE && context.contextDependency == INDEPENDENT) {
+            context.trace.report(IMPLICIT_CAST_TO_UNIT_OR_ANY.on(expression, expressionType));
+        }
+
         return expressionType;
     }
 
