@@ -46,8 +46,8 @@ import org.jetbrains.jps.util.JpsPathUtil
 import org.jetbrains.kotlin.config.IncrementalCompilation
 import org.jetbrains.kotlin.incremental.components.LookupTracker
 import org.jetbrains.kotlin.jps.build.classFilesComparison.assertEqualDirectories
-import org.jetbrains.kotlin.jps.incremental.LookupStorageProvider
 import org.jetbrains.kotlin.jps.incremental.KotlinDataContainerTarget
+import org.jetbrains.kotlin.jps.incremental.LookupStorageProvider
 import org.jetbrains.kotlin.jps.incremental.LookupSymbol
 import org.jetbrains.kotlin.jps.incremental.getKotlinCache
 import org.jetbrains.kotlin.test.KotlinTestUtils
@@ -318,12 +318,18 @@ public abstract class AbstractIncrementalJpsTest(
         workDir = FileUtilRt.createTempDirectory(TEMP_DIRECTORY_TO_USE, "jps-build", null)
 
         val moduleNames = configureModules()
-        initialMake()
+        val initialMakeResult = initialMake()
 
         val otherMakeResults = performModificationsAndMake(moduleNames)
 
         val buildLogFile = File(testDataDir, "build.log")
-        if (buildLogFile.exists() || !allowNoBuildLogFileInTestData) {
+        val fullBuildLogFile = File(testDataDir, "full-build.log")
+
+        if (enableExperimentalIncrementalCompilation && fullBuildLogFile.exists()) {
+            val logs = (listOf(initialMakeResult) + otherMakeResults).joinToString("\n====================\n\n") { it.log }
+            UsefulTestCase.assertSameLinesWithFile(fullBuildLogFile.absolutePath, logs)
+        }
+        else if (buildLogFile.exists() || !allowNoBuildLogFileInTestData) {
             val logs = otherMakeResults.joinToString("\n\n") { it.log }
             UsefulTestCase.assertSameLinesWithFile(buildLogFile.absolutePath, logs)
         }
