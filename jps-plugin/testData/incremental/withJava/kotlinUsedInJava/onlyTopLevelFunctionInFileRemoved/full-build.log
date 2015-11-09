@@ -1,0 +1,17 @@
+Compiling files:
+src/a.kt
+src/b.kt
+End of files
+Compiling files:
+src/Usage.java
+End of files
+
+====================
+
+Cleaning output files:
+out/production/module/META-INF/module.kotlin_module
+out/production/module/test/BKt.class
+End of files
+Compiling files:
+src/b.kt
+End of files
