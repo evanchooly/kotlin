@@ -1,4 +1,7 @@
 // WITH_RUNTIME
 fun foo() {
-    <caret>assert(true, { "text" })
+    <caret>assert(true, {
+        val dummy = 1
+        "text"
+    })
 }
