@@ -17,6 +17,7 @@
 package org.jetbrains.kotlin.idea.caches.resolve
 
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.libraries.LibraryUtil
 import com.intellij.openapi.vfs.VirtualFile
@@ -31,6 +32,7 @@ import com.intellij.psi.stubs.PsiClassHolderFileStub
 import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.kotlin.asJava.*
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
+import org.jetbrains.kotlin.fileClasses.JvmFileClassUtil
 import org.jetbrains.kotlin.fileClasses.javaFileFacadeFqName
 import org.jetbrains.kotlin.idea.decompiler.navigation.SourceNavigationHelper
 import org.jetbrains.kotlin.idea.project.ResolveElementCache
@@ -345,5 +347,21 @@ public class IDELightClassGenerationSupport(private val project: Project) : Ligh
 
     companion object {
         private val LOG = Logger.getInstance(IDELightClassGenerationSupport::class.java)
+    }
+}
+
+class KtFileClassProviderImpl(val lightClassGenerationSupport: LightClassGenerationSupport) : KtFileClassProvider {
+    override fun getFileClasses(file: KtFile): Array<PsiClass> {
+        val result = arrayListOf<PsiClass>()
+        file.children.filterIsInstance<KtClassOrObject>().map { lightClassGenerationSupport.getPsiClass(it) }.filterNotNullTo(result)
+
+        val module = ModuleUtilCore.findModuleForPsiElement(file)
+        if (module != null) {
+            val fileClassFqName = JvmFileClassUtil.getFileClassInfoNoResolve(file).fileClassFqName
+            lightClassGenerationSupport.getFacadeClasses(fileClassFqName, module.moduleContentScope).filterTo(result) {
+                it is KtLightClassForFacade && file in it.files
+            }
+        }
+        return result.toTypedArray()
     }
 }

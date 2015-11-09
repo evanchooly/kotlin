@@ -19,6 +19,7 @@ package org.jetbrains.kotlin.psi;
 import com.intellij.extapi.psi.PsiFileBase;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.FileASTNode;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiClass;
@@ -166,6 +167,10 @@ public class KtFile extends PsiFileBase implements KtDeclarationContainer, KtAnn
     @NotNull
     @Override
     public PsiClass[] getClasses() {
+        KtFileClassProvider fileClassProvider = ServiceManager.getService(getProject(), KtFileClassProvider.class);
+        if (fileClassProvider != null) {
+            return fileClassProvider.getFileClasses(this);
+        }
         return PsiClass.EMPTY_ARRAY;
     }
 
