@@ -304,7 +304,7 @@ public class IDELightClassGenerationSupport(private val project: Project) : Ligh
         return getClassRelativeName(parent).child(name)
     }
 
-    private fun createLightClassForDecompiledKotlinFile(file: KtFile): KtLightClassForDecompiledDeclaration? {
+    fun createLightClassForDecompiledKotlinFile(file: KtFile): KtLightClassForDecompiledDeclaration? {
         val virtualFile = file.virtualFile ?: return null
 
         val classOrObject = file.declarations.filterIsInstance<KtClassOrObject>().singleOrNull()
@@ -352,8 +352,14 @@ public class IDELightClassGenerationSupport(private val project: Project) : Ligh
 
 class KtFileClassProviderImpl(val lightClassGenerationSupport: LightClassGenerationSupport) : KtFileClassProvider {
     override fun getFileClasses(file: KtFile): Array<PsiClass> {
+        if (file.isCompiled) {
+            val support = lightClassGenerationSupport as IDELightClassGenerationSupport
+            val lightClass: PsiClass? = support.createLightClassForDecompiledKotlinFile(file)
+            return if (lightClass != null) arrayOf(lightClass) else arrayOf()
+        }
+
         val result = arrayListOf<PsiClass>()
-        file.children.filterIsInstance<KtClassOrObject>().map { lightClassGenerationSupport.getPsiClass(it) }.filterNotNullTo(result)
+        file.declarations.filterIsInstance<KtClassOrObject>().map { lightClassGenerationSupport.getPsiClass(it) }.filterNotNullTo(result)
 
         val module = ModuleUtilCore.findModuleForPsiElement(file)
         if (module != null) {
