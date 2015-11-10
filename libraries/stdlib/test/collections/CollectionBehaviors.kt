@@ -89,6 +89,9 @@ public fun <K, V> CompareContext<Map<K, V>>.mapBehavior() {
     if (expected.isEmpty().not())
         propertyEquals { contains(keySet().first()) }
 
+    propertyEquals { containsKeyRaw(keys.firstOrNull()) }
+    propertyEquals { getRaw(null) }
+
     compareProperty( { keySet() }, { setBehavior("keySet") } )
     compareProperty( { entrySet() }, { setBehavior("entrySet") } )
     compareProperty( { values() }, { collectionBehavior("values") })
