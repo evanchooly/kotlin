@@ -17,8 +17,12 @@
 package org.jetbrains.kotlin.resolve.calls.inference
 
 import org.jetbrains.kotlin.descriptors.TypeParameterDescriptor
+import org.jetbrains.kotlin.descriptors.annotations.Annotations
+import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.resolve.calls.inference.constraintPosition.ConstraintPosition
+import org.jetbrains.kotlin.resolve.scopes.MemberScope
 import org.jetbrains.kotlin.types.KotlinType
+import org.jetbrains.kotlin.types.KotlinTypeImpl
 import org.jetbrains.kotlin.types.TypeSubstitutor
 
 interface ConstraintSystem {
@@ -32,17 +36,17 @@ interface ConstraintSystem {
     /**
      * Returns a set of all registered type variables.
      */
-    val typeVariables: Set<TypeParameterDescriptor>
+    val typeVariables: Set<TypeVariable>
 
-    fun descriptorToVariable(descriptor: TypeParameterDescriptor): TypeParameterDescriptor
+    fun descriptorToVariable(descriptor: TypeParameterDescriptor): TypeVariable
 
-    fun variableToDescriptor(typeVariable: TypeParameterDescriptor): TypeParameterDescriptor
+    fun variableToDescriptor(typeVariable: TypeVariable): TypeParameterDescriptor
 
     /**
      * Returns the resulting type constraints of solving the constraint system for specific type parameter descriptor.
      * Throws IllegalArgumentException if the type parameter descriptor is not known to the system.
      */
-    fun getTypeBounds(typeVariable: TypeParameterDescriptor): TypeBounds
+    fun getTypeBounds(typeVariable: TypeVariable): TypeBounds
 
     /**
      * Returns the result of solving the constraint system (mapping from the type variable to the resulting type projection).
@@ -91,5 +95,15 @@ interface ConstraintSystem {
         fun fixVariables()
 
         fun build(): ConstraintSystem
+    }
+}
+
+class TypeVariable(val typeParameter: TypeParameterDescriptor) {
+    val name: Name get() = typeParameter.name
+    val type: KotlinType get() = typeParameter.defaultType
+
+    // TODO: WTF?
+    val correspondingType: KotlinType by lazy(LazyThreadSafetyMode.NONE) {
+        KotlinTypeImpl.create(Annotations.EMPTY, typeParameter.typeConstructor, false, listOf(), MemberScope.Empty)
     }
 }

@@ -16,7 +16,6 @@
 
 package org.jetbrains.kotlin.resolve.calls.inference
 
-import org.jetbrains.kotlin.descriptors.TypeParameterDescriptor
 import org.jetbrains.kotlin.resolve.calls.inference.TypeBounds.Bound
 import org.jetbrains.kotlin.resolve.calls.inference.TypeBounds.BoundKind
 import org.jetbrains.kotlin.resolve.calls.inference.TypeBounds.BoundKind.*
@@ -28,7 +27,7 @@ import org.jetbrains.kotlin.types.checker.KotlinTypeChecker
 import org.jetbrains.kotlin.utils.addIfNotNull
 import java.util.*
 
-public class TypeBoundsImpl(override val typeVariable: TypeParameterDescriptor) : TypeBounds {
+public class TypeBoundsImpl(override val typeVariable: TypeVariable) : TypeBounds {
     override val bounds = ArrayList<Bound>()
 
     private var resultValues: Collection<KotlinType>? = null
@@ -134,13 +133,15 @@ public class TypeBoundsImpl(override val typeVariable: TypeParameterDescriptor) 
 
         values.addAll(filterBounds(bounds, TypeBounds.BoundKind.UPPER_BOUND))
 
-        if (values.size == 1 && typeVariable.hasOnlyInputTypesAnnotation() && !tryPossibleAnswer(bounds, values.first())) return listOf()
+        if (values.size == 1 && typeVariable.typeParameter.hasOnlyInputTypesAnnotation() && !tryPossibleAnswer(bounds, values.first())) {
+            return listOf()
+        }
 
         return values
     }
 
     private fun checkOnlyInputTypes(bounds: Collection<Bound>, possibleAnswer: KotlinType): Boolean {
-        if (!typeVariable.hasOnlyInputTypesAnnotation()) return true
+        if (!typeVariable.typeParameter.hasOnlyInputTypesAnnotation()) return true
 
         // Only type mentioned in bounds might be the result
         val typesInBoundsSet = bounds.filter { it.isProper && it.constrainingType.constructor.isDenotable }.map { it.constrainingType }.toSet()
