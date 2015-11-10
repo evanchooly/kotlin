@@ -205,14 +205,15 @@ public class KotlinBuilder : ModuleLevelBuilder(BuilderCategory.SOURCE_PROCESSOR
         updateLookupStorage(chunk, lookupTracker, dataManager, dirtyFilesHolder, filesToCompile)
 
         val caches = filesToCompile.keySet().map { incrementalCaches[it]!! }
-        processChanges(context, chunk, allCompiledFiles, dataManager, caches, changesInfo)
+        processChanges(context, chunk, filesToCompile.values(), allCompiledFiles, dataManager, caches, changesInfo)
 
         return ADDITIONAL_PASS_REQUIRED
     }
 
-    fun processChanges(
+    private fun processChanges(
             context: CompileContext,
             chunk: ModuleChunk,
+            compiledFiles: Collection<File>,
             allCompiledFiles: MutableSet<File>,
             dataManager: BuildDataManager,
             caches: List<IncrementalCacheImpl>,
@@ -255,24 +256,23 @@ public class KotlinBuilder : ModuleLevelBuilder(BuilderCategory.SOURCE_PROCESSOR
         fun ChangesInfo.doProcessChangesUsingLookups() {
             val lookupStorage = dataManager.getStorage(KotlinDataContainerTarget, LookupStorageProvider)
 
-            for (change in changes.groupBy { it.fqName }.flatMap { it.value }) {
+            // TODO group by fqName?
+            for (change in changes) {
+
                 if (change !is ChangeInfo.MembersChanged) continue
 
                 val files = change.names
                         .flatMap { lookupStorage.get(LookupSymbol(it, change.fqName.asString())) }
                         .asSequence()
                         .map { File(it) }
-                        .filter { it !in allCompiledFiles }
-                        .let { if (change is ChangeInfo.Removed) it.filter { it.exists() } else it }
+                        .filter { it !in compiledFiles && it.exists() }
 
                 files.forEach {
                     FSOperations.markDirty(context, CompilationRound.NEXT, it)
                 }
             }
 
-            if (inlineChanged) {
-                recompileInlined()
-            }
+            caches.forEach { it.cleanDirtyInlineFunctions() }
         }
 
         if (IncrementalCompilation.isExperimental()) {

@@ -128,8 +128,12 @@ public class IncrementalCacheImpl(
             dependents.forEach(::addFilesAffectedByChangedInlineFuns)
         }
 
-        dirtyInlineFunctionsMap.clean()
+        cleanDirtyInlineFunctions()
         return result.map { File(it) }
+    }
+
+    public fun cleanDirtyInlineFunctions() {
+        dirtyInlineFunctionsMap.clean()
     }
 
     override fun getClassFilePath(internalClassName: String): String {
@@ -641,6 +645,7 @@ public class IncrementalCacheImpl(
     }
 }
 
+// TODO
 sealed class ChangeInfo(val fqName: FqName) {
     open class MembersChanged(fqName: FqName, val names: Collection<String>) : ChangeInfo(fqName)
     class Removed(fqName: FqName, names: Collection<String>) : MembersChanged(fqName, names)
