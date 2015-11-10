@@ -26,8 +26,12 @@ import org.jetbrains.kotlin.descriptors.impl.FunctionDescriptorImpl;
 import org.jetbrains.kotlin.descriptors.impl.SimpleFunctionDescriptorImpl;
 import org.jetbrains.kotlin.descriptors.impl.TypeParameterDescriptorImpl;
 import org.jetbrains.kotlin.descriptors.impl.ValueParameterDescriptorImpl;
-import org.jetbrains.kotlin.resolve.scopes.*;
-import org.jetbrains.kotlin.types.*;
+import org.jetbrains.kotlin.resolve.scopes.LexicalScope;
+import org.jetbrains.kotlin.resolve.scopes.LexicalScopeImpl;
+import org.jetbrains.kotlin.resolve.scopes.RedeclarationHandler;
+import org.jetbrains.kotlin.types.IndexedParametersSubstitution;
+import org.jetbrains.kotlin.types.KotlinType;
+import org.jetbrains.kotlin.types.TypeSubstitution;
 import org.jetbrains.kotlin.types.typeUtil.TypeUtilsKt;
 
 import java.util.ArrayList;
@@ -35,19 +39,6 @@ import java.util.Collections;
 import java.util.List;
 
 public class FunctionDescriptorUtil {
-    private static final TypeSubstitutor MAKE_TYPE_PARAMETERS_FRESH = TypeSubstitutor.create(new TypeSubstitution() {
-
-        @Override
-        public TypeProjection get(@NotNull KotlinType key) {
-            return null;
-        }
-
-        @Override
-        public String toString() {
-            return "FunctionDescriptorUtil.MAKE_TYPE_PARAMETERS_FRESH";
-        }
-    });
-
     private FunctionDescriptorUtil() {
     }
 
@@ -104,10 +95,6 @@ public class FunctionDescriptorUtil {
                                       KotlinBuiltIns.getReturnTypeFromFunctionType(functionType),
                                       modality,
                                       visibility);
-    }
-
-    public static <D extends CallableDescriptor> D alphaConvertTypeParameters(D candidate) {
-        return (D) candidate.substitute(MAKE_TYPE_PARAMETERS_FRESH);
     }
 
     /**

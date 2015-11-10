@@ -98,7 +98,7 @@ interface ConstraintSystem {
     }
 }
 
-class TypeVariable(val typeParameter: TypeParameterDescriptor) {
+class TypeVariable(val typeParameter: TypeParameterDescriptor, val isExternal: Boolean) {
     val name: Name get() = typeParameter.name
     val type: KotlinType get() = typeParameter.defaultType
 

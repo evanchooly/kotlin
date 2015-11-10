@@ -22,7 +22,6 @@ import org.jetbrains.kotlin.descriptors.CallableDescriptor
 import org.jetbrains.kotlin.descriptors.TypeParameterDescriptor
 import org.jetbrains.kotlin.descriptors.ValueParameterDescriptor
 import org.jetbrains.kotlin.psi.*
-import org.jetbrains.kotlin.resolve.FunctionDescriptorUtil
 import org.jetbrains.kotlin.resolve.calls.callResolverUtil.*
 import org.jetbrains.kotlin.resolve.calls.callResolverUtil.ResolveArgumentsMode.RESOLVE_FUNCTION_ARGUMENTS
 import org.jetbrains.kotlin.resolve.calls.callResolverUtil.ResolveArgumentsMode.SHAPE_FUNCTION_ARGUMENTS
@@ -152,13 +151,17 @@ class GenericCandidateResolver(private val argumentTypeResolver: ArgumentTypeRes
         // otherwise we add currently inferred return type as before
         if (nestedTypeVariables.any { argumentConstraintSystem.getTypeBounds(it).bounds.isNotEmpty() }) return false
 
-        val candidateWithFreshVariables = FunctionDescriptorUtil.alphaConvertTypeParameters(candidateDescriptor)
-        val conversion = candidateDescriptor.typeParameters.zip(candidateWithFreshVariables.typeParameters).toMap()
+        val substitutor = builder.registerTypeVariables(
+                returnType.getNestedTypeParameters().filter { it in candidateDescriptor.typeParameters },
+                external = true
+        )
 
-        val freshVariables = returnType.getNestedTypeParameters().map { conversion[it] }.filterNotNull()
-        builder.registerTypeVariables(freshVariables, external = true)
+        builder.addSubtypeConstraint(
+                candidateDescriptor.returnType?.let { substitutor.substitute(it, Variance.INVARIANT) },
+                effectiveExpectedType,
+                constraintPosition
+        )
 
-        builder.addSubtypeConstraint(candidateWithFreshVariables.returnType, effectiveExpectedType, constraintPosition)
         return true
     }
 

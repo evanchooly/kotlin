@@ -47,7 +47,6 @@ class ConstraintSystemBuilderImpl : ConstraintSystem.Builder {
     }
 
     internal val allTypeParameterBounds = LinkedHashMap<TypeVariable, TypeBoundsImpl>()
-    internal val externalTypeParameters = HashSet<TypeParameterDescriptor>()
     internal val usedInBounds = HashMap<TypeVariable, MutableList<TypeBounds.Bound>>()
     internal val errors = ArrayList<ConstraintError>()
     internal val initialConstraints = ArrayList<Constraint>()
@@ -68,20 +67,22 @@ class ConstraintSystemBuilderImpl : ConstraintSystem.Builder {
     override fun registerTypeVariables(typeParameters: Collection<TypeParameterDescriptor>, external: Boolean): TypeSubstitutor {
         if (typeParameters.isEmpty()) return TypeSubstitutor.EMPTY
 
-        val typeVariables = (if (external) {
-            externalTypeParameters.addAll(typeParameters)
-            typeParameters.toList()
-        }
-        else ArrayList<TypeParameterDescriptor>(typeParameters.size).apply {
+        val typeVariables = (ArrayList<TypeParameterDescriptor>(typeParameters.size).apply {
             DescriptorSubstitutor.substituteTypeParameters(
                     typeParameters.toList(), TypeSubstitution.EMPTY, typeParameters.first().containingDeclaration, this
             )
         }).map { typeParameter ->
-            TypeVariable(typeParameter)
+            TypeVariable(typeParameter, external)
         }
 
         for ((descriptor, typeVariable) in typeParameters.zip(typeVariables)) {
             allTypeParameterBounds.put(typeVariable, TypeBoundsImpl(typeVariable))
+            if (descriptorToVariable.containsKey(descriptor)) {
+                println("REWRITE descriptor -> variable: key $descriptor, old value ${descriptorToVariable[descriptor]}, new value $typeVariable")
+            }
+            if (variableToDescriptor.containsKey(typeVariable)) {
+                println("REWRITE descriptor -> variable: key $typeVariable, old value ${variableToDescriptor[typeVariable]}, new value $descriptor")
+            }
             descriptorToVariable[descriptor] = typeVariable
             variableToDescriptor[typeVariable] = descriptor
         }
@@ -373,14 +374,15 @@ class ConstraintSystemBuilderImpl : ConstraintSystem.Builder {
 
     override fun fixVariables() {
         // todo variables should be fixed in the right order
-        val (external, functionTypeParameters) = allTypeParameterBounds.keys.partition { it.typeParameter in externalTypeParameters }
+        val (external, functionTypeParameters) = allTypeParameterBounds.keys.partition { it.isExternal }
         external.forEach { fixVariable(it) }
         functionTypeParameters.forEach { fixVariable(it) }
     }
 
     override fun build(): ConstraintSystem {
-        return ConstraintSystemImpl(allTypeParameterBounds, externalTypeParameters, usedInBounds, errors, initialConstraints,
-                                    descriptorToVariable, variableToDescriptor)
+        return ConstraintSystemImpl(
+                allTypeParameterBounds, usedInBounds, errors, initialConstraints, descriptorToVariable, variableToDescriptor
+        )
     }
 }
 
