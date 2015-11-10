@@ -346,8 +346,12 @@ public abstract class FunctionDescriptorImpl extends DeclarationDescriptorNonRoo
         if (substitutedReturnType == null) {
             return null;
         }
-        if (newReturnType.isMarkedNullable()) {
-            substitutedReturnType = TypeUtils.makeNullable(substitutedReturnType);
+
+        if (original != null) {
+            KotlinType returnType = original.getReturnType();
+            if (returnType != null && TypeUtils.isTypeParameter(returnType) && returnType.isMarkedNullable()) {
+                substitutedReturnType = TypeUtils.makeNullable(substitutedReturnType);
+            }
         }
 
         substitutedDescriptor.initialize(

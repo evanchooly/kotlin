@@ -230,10 +230,9 @@ public class PropertyDescriptorImpl extends VariableDescriptorWithInitializerImp
             return null; // TODO : tell the user that the property was projected out
         }
 
-        if (originalOutType.isMarkedNullable()) {
+        if (TypeUtils.isTypeParameter(originalOutType) && originalOutType.isMarkedNullable()) {
             outType = TypeUtils.makeNullable(outType);
         }
-
 
         ReceiverParameterDescriptor substitutedDispatchReceiver;
         ReceiverParameterDescriptor dispatchReceiver = getDispatchReceiverParameter();
