@@ -353,9 +353,7 @@ public class IDELightClassGenerationSupport(private val project: Project) : Ligh
 class KtFileClassProviderImpl(val lightClassGenerationSupport: LightClassGenerationSupport) : KtFileClassProvider {
     override fun getFileClasses(file: KtFile): Array<PsiClass> {
         if (file.isCompiled) {
-            val support = lightClassGenerationSupport as IDELightClassGenerationSupport
-            val lightClass: PsiClass? = support.createLightClassForDecompiledKotlinFile(file)
-            return if (lightClass != null) arrayOf(lightClass) else arrayOf()
+            return arrayOf()
         }
 
         val result = arrayListOf<PsiClass>()
