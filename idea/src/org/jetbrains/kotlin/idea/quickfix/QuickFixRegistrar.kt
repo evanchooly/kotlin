@@ -314,6 +314,7 @@ public class QuickFixRegistrar : QuickFixContributor {
                                         ReplaceObsoleteLabelSyntaxFix.createWholeProjectFixFactory())
 
         DEPRECATION.registerFactory(DeprecatedSymbolUsageFix, DeprecatedSymbolUsageInWholeProjectFix)
+        DEPRECATION_ERROR.registerFactory(DeprecatedSymbolUsageFix, DeprecatedSymbolUsageInWholeProjectFix)
 
         POSITIONED_VALUE_ARGUMENT_FOR_JAVA_ANNOTATION.registerFactory(ReplaceJavaAnnotationPositionedArgumentsFix)
 
