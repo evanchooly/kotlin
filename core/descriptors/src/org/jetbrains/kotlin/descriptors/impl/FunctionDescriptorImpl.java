@@ -22,10 +22,7 @@ import org.jetbrains.kotlin.descriptors.*;
 import org.jetbrains.kotlin.descriptors.annotations.Annotations;
 import org.jetbrains.kotlin.name.Name;
 import org.jetbrains.kotlin.resolve.DescriptorFactory;
-import org.jetbrains.kotlin.types.DescriptorSubstitutor;
-import org.jetbrains.kotlin.types.KotlinType;
-import org.jetbrains.kotlin.types.TypeSubstitutor;
-import org.jetbrains.kotlin.types.Variance;
+import org.jetbrains.kotlin.types.*;
 import org.jetbrains.kotlin.utils.CollectionsKt;
 import org.jetbrains.kotlin.utils.SmartSet;
 
@@ -348,6 +345,9 @@ public abstract class FunctionDescriptorImpl extends DeclarationDescriptorNonRoo
         KotlinType substitutedReturnType = substitutor.substitute(newReturnType, Variance.OUT_VARIANCE);
         if (substitutedReturnType == null) {
             return null;
+        }
+        if (newReturnType.isMarkedNullable()) {
+            substitutedReturnType = TypeUtils.makeNullable(substitutedReturnType);
         }
 
         substitutedDescriptor.initialize(

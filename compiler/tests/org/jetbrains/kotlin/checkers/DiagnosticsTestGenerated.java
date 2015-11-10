@@ -6683,6 +6683,12 @@ public class DiagnosticsTestGenerated extends AbstractDiagnosticsTest {
                     doTest(fileName);
                 }
 
+                @TestMetadata("nullableReturnTypeForGeneric.kt")
+                public void testNullableReturnTypeForGeneric() throws Exception {
+                    String fileName = KotlinTestUtils.navigationMetadata("compiler/testData/diagnostics/tests/generics/nullability/nullableReturnTypeForGeneric.kt");
+                    doTest(fileName);
+                }
+
                 @TestMetadata("smartCastRefinedClass.kt")
                 public void testSmartCastRefinedClass() throws Exception {
                     String fileName = KotlinTestUtils.navigationMetadata("compiler/testData/diagnostics/tests/generics/nullability/smartCastRefinedClass.kt");
